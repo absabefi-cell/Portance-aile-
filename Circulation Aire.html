@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Démo portance — aile paramétrable</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#101826; --ink:#eaf2fb; --muted:#9ab0c8;
+    --accent:#5ac8fa; --ok:#7ee787; --warn:#ffb86b; --bad:#ff6b6b;
+    --grid:#203044; --border:#1d2a3b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Inter,Roboto,Segoe UI,sans-serif}
+  header{padding:12px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#122033,#0b0f14)}
+  h1{font-size:18px;margin:0}
+  .wrap{display:grid;grid-template-columns:320px 1fr;gap:14px;padding:14px}
+  @media (max-width: 900px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .side{padding:12px}
+  label{font-size:12px;color:var(--muted);display:block;margin:6px 0 4px}
+  .row{display:flex;gap:8px;align-items:center}
+  input[type="range"]{width:100%}
+  input[type="number"]{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:#0e1520;color:var(--ink)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px;font-size:13px;margin-top:8px}
+  .kv div:nth-child(odd){color:var(--muted)}
+  .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+  .ok{color:var(--ok);border-color:#2a5033}.bad{color:var(--bad);border-color:#5b2a2a}.warn{color:var(--warn);border-color:#5b4a2a}
+  .note{font-size:12px;color:var(--muted);line-height:1.35;margin-top:8px}
+  .err{font-size:13px;color:var(--bad);min-height:16px}
+  canvas{width:100%;height:52vh;display:block;border-radius:14px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+  .blue{background:#4aa3ff}.red{background:#ff6b6b}.flow{background:#9ab0c8}
+</style>
+</head>
+<body>
+<header><h1>Portance d’une aile — illustration interactive</h1></header>
+
+<div class="wrap">
+  <section class="card side">
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Vitesse avion V (m/s)</label>
+        <input id="V" type="range" min="0" max="120" step="1" value="65">
+      </div>
+      <div style="width:84px"><input id="Vn" type="number" min="0" max="300" step="1" value="65"></div>
+    </div>
+
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Vent (m/s) — + = face</label>
+        <input id="wind" type="range" min="-30" max="30" step="1" value="5">
+      </div>
+      <div style="width:84px"><input id="windn" type="number" min="-100" max="100" step="1" value="5"></div>
+    </div>
+
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Angle d’attaque α (°)</label>
+        <input id="alpha" type="range" min="-10" max="18" step="0.5" value="4">
+      </div>
+      <div style="width:84px"><input id="alphan" type="number" min="-20" max="30" step="0.5" value="4"></div>
+    </div>
+
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Courbure du dessus (camber %) </label>
+        <input id="camberTop" type="range" min="0" max="8" step="0.1" value="3.0">
+      </div>
+      <div style="width:84px"><input id="camberTopn" type="number" min="0" max="20" step="0.1" value="3.0"></div>
+    </div>
+
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Forme du dessous (− concave, + convexe) %</label>
+        <input id="camberBot" type="range" min="-6" max="6" step="0.1" value="0.0">
+      </div>
+      <div style="width:84px"><input id="camberBotn" type="number" min="-20" max="20" step="0.1" value="0.0"></div>
+    </div>
+
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Épaisseur relative (t %) </label>
+        <input id="thick" type="range" min="6" max="18" step="0.5" value="12">
+      </div>
+      <div style="width:84px"><input id="thickn" type="number" min="4" max="24" step="0.5" value="12"></div>
+    </div>
+
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Surface alaire S (m²)</label>
+        <input id="S" type="range" min="2" max="60" step="0.5" value="16">
+      </div>
+      <div style="width:84px"><input id="Sn" type="number" min="1" max="200" step="0.5" value="16"></div>
+    </div>
+
+    <div class="row" style="gap:12px;align-items:end">
+      <div style="flex:1">
+        <label>Poids (N)</label>
+        <input id="W" type="range" min="1000" max="150000" step="500" value="20000">
+      </div>
+      <div style="width:84px"><input id="Wn" type="number" min="100" max="300000" step="100" value="20000"></div>
+    </div>
+
+    <div class="kv" id="readout">
+      <div>V air relatif</div><div><span id="Veff">—</span> m/s</div>
+      <div>ρ air (fixé)</div><div>1.225 kg/m³</div>
+      <div>C<sub>L</sub> (modèle)</div><div><span id="CL">—</span></div>
+      <div>C<sub>D</sub> (modèle)</div><div><span id="CD">—</span></div>
+      <div>Portance L</div><div><span id="Lift">—</span> N</div>
+      <div>Traînée D</div><div><span id="Drag">—</span> N</div>
+      <div>État</div><div id="state" class="pill">—</div>
+    </div>
+    <div class="note">
+      Modèle <b>pédagogique</b> (non CFD) : C<sub>L</sub> ≈ 2π(α + effet cambrure) avec décrochage doux.  
+      Les couleurs sur le graphe représentent la <b>pression relative</b> (bleu = basse, rouge = haute).  
+    </div>
+    <div class="err" id="err"></div>
+  </section>
+
+  <section class="card">
+    <canvas id="cv" width="1400" height="700"></canvas>
+    <div class="legend">
+      <span><span class="dot flow"></span>Lignes de flux (schéma)</span>
+      <span><span class="dot blue"></span>Pression basse (extrados)</span>
+      <span><span class="dot red"></span>Pression haute (intrados)</span>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  // ===== DOM utils
+  const $ = sel => document.querySelector(sel);
+  const link = (range, num) => {
+    const r = $(range), n = $(num);
+    const sync = v => { r.value = v; n.value = v; changed(); };
+    r.addEventListener('input', () => n.value = r.value, {passive:true});
+    n.addEventListener('input', () => r.value = n.value);
+    r.addEventListener('change', changed);
+    n.addEventListener('change', changed);
+    return sync;
+  };
+
+  // ===== Canvas
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+
+  function resizeCanvasHiDPI() {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const rect = cv.getBoundingClientRect();
+    cv.width = Math.round(rect.width * dpr);
+    cv.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS coords
+    draw();
+  }
+  window.addEventListener('resize', resizeCanvasHiDPI);
+
+  // ===== Inputs
+  const syncV = link('#V','#Vn');
+  const syncWind = link('#wind','#windn');
+  const syncAlpha = link('#alpha','#alphan');
+  const syncCamberTop = link('#camberTop','#camberTopn');
+  const syncCamberBot = link('#camberBot','#camberBotn');
+  const syncThick = link('#thick','#thickn');
+  const syncS = link('#S','#Sn');
+  const syncW = link('#W','#Wn');
+
+  const rho = 1.225; // kg/m^3
+
+  const out = {
+    Veff: $('#Veff'), CL: $('#CL'), CD: $('#CD'),
+    Lift: $('#Lift'), Drag: $('#Drag'), state: $('#state'), err: $('#err')
+  };
+
+  function val(id){ return parseFloat($(id).value); }
+
+  // ===== Simple airfoil geometry (parametric camber + thickness)
+  function airfoilPath(camberTopPct, camberBotPct, thicknessPct, alphaDeg){
+    // Chord from 0..1 in x, camber line via simple quadratic peaking at 40% chord
+    const t = thicknessPct/100;
+    const ct = camberTopPct/100;
+    const cb = camberBotPct/100; // negative = concave
+    const N = 120;
+    const ptsTop = [];
+    const ptsBot = [];
+    for(let i=0;i<=N;i++){
+      const x = i/N;
+      // camber function (blend top and bottom)
+      const camber = (ct*(1 - Math.pow((x-0.4)/0.4,2))) - (cb*(1 - Math.pow((x-0.6)/0.6,2)));
+      // symmetric thickness shape (simple) peaking at 30%
+      const yt = 5*t*(0.2969*Math.sqrt(Math.max(x,0)) - 0.1260*x - 0.3516*x*x + 0.2843*x*x*x - 0.1015*x*x*x*x);
+      ptsTop.push([x, camber + yt]);
+      ptsBot.push([x, camber - yt]);
+    }
+    // rotate by alpha
+    const a = alphaDeg*Math.PI/180;
+    const rot = ([x,y]) => {
+      const xr = (x-0.5)*Math.cos(a) - y*Math.sin(a) + 0.5;
+      const yr = (x-0.5)*Math.sin(a) + y*Math.cos(a);
+      return [xr, yr];
+    };
+    return {
+      top: ptsTop.map(rot),
+      bot: ptsBot.reverse().map(rot),
+    };
+  }
+
+  // ===== "Toy" aerodynamics model (didactic)
+  function aeroModel(V, wind, alphaDeg, camberTopPct, camberBotPct, thicknessPct, S){
+    // Effective freestream speed
+    const Vinf = Math.max(0, V + Math.max(0, wind)); // wind>0 is headwind -> adds speed; if tailwind (negative), reduces
+    // Lift slope (per rad) with camber bias; thin airfoil ~ 2*pi
+    const aRad = alphaDeg * Math.PI/180;
+    const camberEff = 0.012*camberTopPct - 0.006*camberBotPct; // top camber increases CL0, concave bottom slightly increases too if negative
+    let CL = 2*Math.PI*(aRad + camberEff); // small-angle linear
+    // Thickness influences max CL and stall
+    const t = thicknessPct/100;
+    const alphaStall = (10 + 120*t)/180*Math.PI; // ~ increases with thickness (rough heuristic)
+    // Soft stall: apply tanh roll-off beyond stall
+    const mag = Math.abs(aRad);
+    if(mag > alphaStall){
+      const sign = Math.sign(CL);
+      const excess = (mag - alphaStall)/(20*Math.PI/180); // scale over ~20°
+      const roll = 1/(1+excess*excess); // soft decay
+      CL = sign * Math.abs(CL) * roll;
+    }
+    // Drag polar
+    const CD0 = 0.02 + 0.02*t;  // parasite drag rises with thickness
+    const k = 0.045;            // induced drag factor (toy)
+    const CD = CD0 + k*CL*CL;
+
+    const q = 0.5 * rho * Vinf * Vinf;
+    const L = q * S * CL;
+    const D = q * S * CD;
+
+    return {Vinf, CL, CD, L, D};
+  }
+
+  // ===== Flow visualization (qualitative)
+  function drawFlow(foil, Vinf, CL){
+    const W = cv.clientWidth, H = cv.clientHeight;
+    const pad = 40;
+    const scale = Math.min((W-2*pad), (H-2*pad)) * 0.9;
+    const cx = W*0.35, cy = H*0.55;
+
+    // Map function chord [0..1], height ~ [-0.25..0.25] to pixels
+    const map = ([x,y]) => [cx + (x-0.5)*scale, cy - y*scale];
+
+    // Background
+    ctx.fillStyle = '#0f1724'; ctx.fillRect(0,0,W,H);
+
+    // Pressure shading (very approximate): use CL to bias
+    // We'll paint a soft gradient around the foil
+    const grdTop = ctx.createLinearGradient(cx, cy-0.6*scale, cx, cy);
+    grdTop.addColorStop(0, 'rgba(74,163,255,0.55)'); // blue (low P)
+    grdTop.addColorStop(1, 'rgba(74,163,255,0.00)');
+    ctx.fillStyle = grdTop;
+    ctx.fillRect(cx-0.6*scale, cy-0.7*scale, 1.2*scale, 0.7*scale);
+
+    const grdBot = ctx.createLinearGradient(cx, cy, cx, cy+0.6*scale);
+    grdBot.addColorStop(0, 'rgba(255,107,107,0.00)');
+    grdBot.addColorStop(1, 'rgba(255,107,107,0.45)'); // red (high P)
+    ctx.fillStyle = grdBot;
+    ctx.fillRect(cx-0.6*scale, cy, 1.2*scale, 0.7*scale);
+
+    // Grid lines
+    ctx.strokeStyle = '#1f2a38'; ctx.lineWidth = 1;
+    for(let i=pad;i<W-pad;i+=40){ ctx.beginPath(); ctx.moveTo(i,pad); ctx.lineTo(i,H-pad); ctx.stroke(); }
+    for(let j=pad;j<H-pad;j+=40){ ctx.beginPath(); ctx.moveTo(pad,j); ctx.lineTo(W-pad,j); ctx.stroke(); }
+
+    // Draw airfoil
+    ctx.fillStyle = '#d9e6f7';
+    ctx.strokeStyle = '#8fa9c7'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    const first = map(foil.top[0]); ctx.moveTo(first[0], first[1]);
+    foil.top.forEach(p => { const m = map(p); ctx.lineTo(m[0], m[1]); });
+    foil.bot.forEach(p => { const m = map(p); ctx.lineTo(m[0], m[1]); });
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    // Streamlines (qualitative): a few Bezier-like curves around
+    const lines = 9;
+    for(let k=0;k<lines;k++){
+      const yk = -0.35 + k*(0.7/(lines-1)); // -0.35..+0.35 chord heights
+      ctx.strokeStyle = 'rgba(154,176,200,0.9)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      const x0 = -0.2, x3 = 1.35;
+      // Curve deviates more over the top when CL>0
+      const bump = 0.22 + 0.12*Math.tanh(CL); // more lift => more bend
+      const ctrl1 = [0.25, yk - bump];
+      const ctrl2 = [0.75, yk + 0.08]; // small recovery
+      const p0 = map([x0, yk]), p3 = map([x3, yk]);
+      const c1 = map(ctrl1), c2 = map(ctrl2);
+      ctx.moveTo(p0[0], p0[1]);
+      ctx.bezierCurveTo(c1[0],c1[1], c2[0],c2[1], p3[0],p3[1]);
+      ctx.stroke();
+
+      // Little arrows along flow
+      const t = 0.55;
+      const bx = (1-t)**3*x0 + 3*(1-t)**2*t*ctrl1[0] + 3*(1-t)*t**2*ctrl2[0] + t**3*x3;
+      const by = (1-t)**3*yk + 3*(1-t)**2*t*ctrl1[1] + 3*(1-t)*t**2*ctrl2[1] + t**3*yk;
+      const pM = map([bx,by]);
+      ctx.save();
+      ctx.translate(pM[0],pM[1]);
+      const angle = -Math.atan2((c2[1]-c1[1]), (c2[0]-c1[0]));
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(0,0); ctx.lineTo(10,0); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(10,0); ctx.lineTo(5,-3); ctx.lineTo(5,3); ctx.closePath(); ctx.fillStyle='rgba(154,176,200,0.9)'; ctx.fill();
+      ctx.restore();
+    }
+
+    // Lift vector & weight
+    const liftLen = Math.min(120, 40 + Math.abs(CL)*50);
+    ctx.strokeStyle = '#7ee787'; ctx.fillStyle = '#7ee787';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx+0.7*scale, cy); ctx.lineTo(cx+0.7*scale, cy - liftLen); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+0.7*scale, cy - liftLen); ctx.lineTo(cx+0.7*scale-5, cy - liftLen+10); ctx.lineTo(cx+0.7*scale+5, cy - liftLen+10); ctx.closePath(); ctx.fill();
+
+    ctx.strokeStyle = '#ff6b6b'; ctx.fillStyle = '#ff6b6b';
+    ctx.beginPath(); ctx.moveTo(cx+0.82*scale, cy-10); ctx.lineTo(cx+0.82*scale, cy+50); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+0.82*scale, cy+50); ctx.lineTo(cx+0.82*scale-5, cy+40); ctx.lineTo(cx+0.82*scale+5, cy+40); ctx.closePath(); ctx.fill();
+  }
+
+  // ===== Draw everything
+  function draw(){
+    out.err.textContent = "";
+    const V = val('#V'), wind = val('#wind'), alpha = val('#alpha');
+    const camTop = val('#camberTop'), camBot = val('#camberBot'), thick = val('#thick');
+    const S = val('#S'), W = val('#W');
+
+    try{
+      const foil = airfoilPath(camTop, camBot, thick, alpha);
+      const {Vinf, CL, CD, L, D} = aeroModel(V, wind, alpha, camTop, camBot, thick, S);
+
+      out.Veff.textContent = Vinf.toFixed(1);
+      out.CL.textContent = CL.toFixed(3);
+      out.CD.textContent = CD.toFixed(3);
+      out.Lift.textContent = Math.round(L).toLocaleString('fr-CA');
+      out.Drag.textContent = Math.round(D).toLocaleString('fr-CA');
+
+      const ratio = L / W;
+      const st = out.state;
+      if (Vinf < 1){
+        st.textContent = "V≈0 : pas d’écoulement";
+        st.className = "pill warn";
+      } else if (ratio >= 1.05){
+        st.textContent = "L ≥ W : ça vole ✅";
+        st.className = "pill ok";
+      } else if (ratio >= 0.7){
+        st.textContent = "L proche de W (marge faible)";
+        st.className = "pill warn";
+      } else {
+        st.textContent = "L < W : insuffisant";
+        st.className = "pill bad";
+      }
+
+      drawFlow(foil, Vinf, CL);
+    }catch(e){
+      out.err.textContent = "Erreur: " + e.message;
+    }
+  }
+
+  function changed(){ draw(); }
+
+  // init values & render
+  resizeCanvasHiDPI();
+  syncV($('#V').value); syncWind($('#wind').value);
+  syncAlpha($('#alpha').value); syncCamberTop($('#camberTop').value);
+  syncCamberBot($('#camberBot').value); syncThick($('#thick').value);
+  syncS($('#S').value); syncW($('#W').value);
+})();
+</script>
+</body>
+</html>
